@@ -1,0 +1,1 @@
+html { scroll-behavior:smooth; } body { margin:0; background:#090e23; font-family:'DM Sans',Arial,sans-serif; transition:background-color .6s ease; } ::selection { background:#ffcf72; color:#14152b; }
