@@ -12,6 +12,7 @@ export interface SunData {
   solarNoon: Date;
   dayLength: number;
   altitude: number;
+  azimuth: number;
 }
 
 export interface MoonData {
@@ -19,4 +20,6 @@ export interface MoonData {
   set: Date | null;
   phase: number;
   illumination: number;
+  altitude: number;
+  azimuth: number;
 }

@@ -7,13 +7,28 @@ export class AstronomyService {
   sun(date: Date, place: Location): SunData {
     const times = SunCalc.getTimes(date, place.latitude, place.longitude);
     const position = SunCalc.getPosition(date, place.latitude, place.longitude);
-    return { sunrise: times.sunrise, sunset: times.sunset, solarNoon: times.solarNoon, dayLength: times.sunset.getTime() - times.sunrise.getTime(), altitude: position.altitude };
+    return {
+      sunrise: times.sunrise,
+      sunset: times.sunset,
+      solarNoon: times.solarNoon,
+      dayLength: times.sunset.getTime() - times.sunrise.getTime(),
+      altitude: position.altitude,
+      azimuth: this.toCompassAzimuth(position.azimuth)
+    };
   }
 
   moon(date: Date, place: Location): MoonData {
     const times = SunCalc.getMoonTimes(date, place.latitude, place.longitude);
     const phase = SunCalc.getMoonIllumination(date);
-    return { rise: times.rise ?? null, set: times.set ?? null, phase: phase.phase, illumination: phase.fraction };
+    const position = SunCalc.getMoonPosition(date, place.latitude, place.longitude);
+    return {
+      rise: times.rise ?? null,
+      set: times.set ?? null,
+      phase: phase.phase,
+      illumination: phase.fraction,
+      altitude: position.altitude,
+      azimuth: this.toCompassAzimuth(position.azimuth)
+    };
   }
 
   /**
@@ -25,6 +40,7 @@ export class AstronomyService {
   moonForCalendarDate(year: number, month: number, day: number, place: Location): MoonData {
     const sample = this.zonedDateToUtc(year, month, day, 12, place.timezone);
     const phase = SunCalc.getMoonIllumination(sample);
+    const position = SunCalc.getMoonPosition(sample, place.latitude, place.longitude);
     const targetKey = this.calendarKey(year, month, day);
     const rises: Date[] = [];
     const sets: Date[] = [];
@@ -42,7 +58,9 @@ export class AstronomyService {
       rise: rises[0] ?? null,
       set: sets[0] ?? null,
       phase: phase.phase,
-      illumination: phase.fraction
+      illumination: phase.fraction,
+      altitude: position.altitude,
+      azimuth: this.toCompassAzimuth(position.azimuth)
     };
   }
 
@@ -61,6 +79,12 @@ export class AstronomyService {
     // SunCalc exposes the standard astronomical (-18°) dawn/dusk as nightEnd/night.
     const times = SunCalc.getTimes(date, place.latitude, place.longitude);
     return { fajr: times.nightEnd, dhuhr: times.solarNoon, maghrib: times.sunset, isha: times.night };
+  }
+
+  private toCompassAzimuth(sunCalcAzimuth: number): number {
+    // SunCalc mesure l'azimut depuis le sud vers l'ouest.
+    // Lunaris l'affiche comme une boussole classique : N=0°, E=90°, S=180°, O=270°.
+    return (sunCalcAzimuth * 180 / Math.PI + 180 + 360) % 360;
   }
 
   private dateKeyInTimeZone(date: Date, timeZone: string): string {

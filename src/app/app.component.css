@@ -134,3 +134,280 @@ main.theme-day .place-menu small,
 main.theme-day .search-note,
 main.theme-day .search-state { color:#687382; }
 main.theme-day .theme-indicator { color:#8c6414; background:#e3b95a2b; }
+
+/* --------------------------------------------------------------------------
+   Vue immersive du ciel en direct
+   -------------------------------------------------------------------------- */
+.sky-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  padding: 28px;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  background: rgba(2, 5, 17, .78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.sky-immersive {
+  width: min(1180px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  color: #f7f4ec;
+  background: #080d20;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  box-shadow: 0 30px 100px rgba(0,0,0,.48);
+}
+.immersive-header {
+  padding: 24px 28px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.immersive-header h2 {
+  margin: 0;
+  color: #fffaf0;
+  font: 600 clamp(27px, 4vw, 44px)/1 'Playfair Display', serif;
+  letter-spacing: -1.5px;
+}
+.immersive-header > div > p:last-child {
+  margin: 8px 0 0;
+  color: #8e9ab7;
+  font: 10px 'DM Mono', monospace;
+}
+.immersive-close {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 50%;
+  color: #f8f4e9;
+  background: rgba(255,255,255,.07);
+  font-size: 16px;
+}
+.immersive-close:hover { background: rgba(255,255,255,.14); }
+.immersive-close:focus-visible,
+.ghost:focus-visible { outline: 2px solid #ffd271; outline-offset: 3px; }
+
+.immersive-dome {
+  height: clamp(390px, 52vw, 590px);
+  margin: 24px 28px 0;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(171,200,231,.22);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(92,123,176,.22), transparent 35%),
+    linear-gradient(180deg, #09122d 0%, #16254a 52%, #273a52 76%, #151b27 76.2%, #0d121c 100%);
+}
+.immersive-dome:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 76%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #f6d990 14%, #fff5d4 50%, #f6d990 86%, transparent);
+  box-shadow: 0 0 18px rgba(255,218,139,.18);
+}
+.immersive-stars {
+  position: absolute;
+  inset: 0 0 24%;
+  opacity: .65;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.9) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(255,223,157,.85) 0 1px, transparent 1.3px),
+    radial-gradient(circle, rgba(194,218,255,.82) 0 1px, transparent 1.2px);
+  background-size: 117px 103px, 179px 151px, 233px 187px;
+  background-position: 17px 12px, 63px 48px, 12px 85px;
+}
+.zenith-label {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #8491ad;
+  font: 9px 'DM Mono', monospace;
+  letter-spacing: 1.5px;
+}
+.cardinal {
+  position: absolute;
+  bottom: calc(24% + 9px);
+  z-index: 3;
+  color: #d9e2f1;
+  font: 9px 'DM Mono', monospace;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.cardinal-n1 { left: 2.5%; transform: none; }
+.cardinal-e { left: 25%; }
+.cardinal-s { left: 50%; }
+.cardinal-o { left: 75%; }
+.cardinal-n2 { right: 2.5%; left: auto; transform: none; }
+.altitude-guide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  border-top: 1px dashed rgba(184,200,225,.16);
+}
+.altitude-guide span {
+  position: absolute;
+  right: 8px;
+  top: -14px;
+  color: #66738f;
+  font: 8px 'DM Mono', monospace;
+}
+.guide-60 { top: 36%; }
+.guide-30 { top: 56%; }
+.immersive-horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 76%;
+  z-index: 3;
+  text-align: center;
+}
+.immersive-horizon span {
+  display: inline-block;
+  transform: translateY(9px);
+  padding: 0 8px;
+  color: #e8d4a6;
+  background: #1d2939;
+  font: 8px 'DM Mono', monospace;
+  letter-spacing: 1.1px;
+}
+.below-zone {
+  position: absolute;
+  inset: 76% 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 12px;
+  color: #5f6980;
+  font: 8px 'DM Mono', monospace;
+  letter-spacing: 1.5px;
+  background: linear-gradient(180deg, rgba(4,8,16,.04), rgba(3,5,11,.38));
+}
+.sky-object {
+  position: absolute;
+  z-index: 5;
+  min-width: 80px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  transform: translate(-50%, -50%);
+  transition: left .65s ease, top .65s ease, opacity .4s ease;
+  text-align: center;
+  pointer-events: none;
+}
+.sky-object i {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-style: normal;
+  font-size: 31px;
+}
+.sky-object strong {
+  margin-top: 3px;
+  color: #fff9eb;
+  font: 600 12px 'Playfair Display', serif;
+}
+.sky-object small {
+  color: #aab6cd;
+  font: 8px 'DM Mono', monospace;
+  white-space: nowrap;
+}
+.sun-live i {
+  color: #ffe989;
+  background: rgba(255,198,74,.14);
+  box-shadow: 0 0 34px 11px rgba(255,184,55,.2);
+  text-shadow: 0 0 14px rgba(255,212,101,.85);
+}
+.moon-live i {
+  color: #eef4ff;
+  background: rgba(196,216,245,.12);
+  box-shadow: 0 0 24px 8px rgba(172,201,241,.13);
+  text-shadow: 0 0 12px rgba(206,225,255,.65);
+}
+.sky-object.below-horizon { opacity: .48; filter: saturate(.55); }
+
+.immersive-readings {
+  margin: 16px 28px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.immersive-readings article { padding: 17px 18px; border-right: 1px solid rgba(255,255,255,.1); }
+.immersive-readings article:last-child { border-right: 0; }
+.immersive-readings span,
+.immersive-readings small { display: block; color: #8d99b5; font-size: 9px; }
+.immersive-readings span { text-transform: uppercase; letter-spacing: 1px; }
+.immersive-readings b { display: block; margin: 6px 0 4px; color: #fff9ee; font: 600 20px 'Playfair Display', serif; }
+.immersive-note { margin: 14px 28px 24px; color: #78849e; font-size: 10px; line-height: 1.5; }
+
+main.theme-day .sky-modal-backdrop { background: rgba(32,40,52,.62); }
+main.theme-day .sky-immersive { background: #eef1f3; color: #263140; border-color: #64728244; }
+main.theme-day .immersive-header { border-bottom-color: #5060712b; }
+main.theme-day .immersive-header h2 { color: #202a38; }
+main.theme-day .immersive-header > div > p:last-child { color: #657181; }
+main.theme-day .immersive-close { color: #283444; background: #ffffff80; border-color: #52617044; }
+main.theme-day .immersive-dome {
+  border-color: #64798b55;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255,255,255,.6), transparent 35%),
+    linear-gradient(180deg, #9eb7c9 0%, #b9cbd6 52%, #d5d4c9 76%, #92979a 76.2%, #737a7d 100%);
+}
+main.theme-day .immersive-stars { opacity: .08; }
+main.theme-day .immersive-horizon span { color: #5b4a28; background: #d7d5c9; }
+main.theme-day .cardinal { color: #3e4d5c; }
+main.theme-day .zenith-label,
+main.theme-day .altitude-guide span { color: #667384; }
+main.theme-day .altitude-guide { border-color: #4e61752d; }
+main.theme-day .below-zone { color: #c7cbd0; background: linear-gradient(180deg, rgba(79,84,86,.04), rgba(46,51,54,.25)); }
+main.theme-day .sky-object strong { color: #26313d; }
+main.theme-day .sky-object small { color: #4d5b6b; }
+main.theme-day .immersive-readings { border-color: #5b69782c; }
+main.theme-day .immersive-readings article { border-color: #5b69782c; }
+main.theme-day .immersive-readings span,
+main.theme-day .immersive-readings small,
+main.theme-day .immersive-note { color: #687585; }
+main.theme-day .immersive-readings b { color: #25303d; }
+
+@media (max-width: 850px) {
+  .sky-modal-backdrop { padding: 14px; align-items: start; }
+  .sky-immersive { max-height: calc(100vh - 28px); }
+  .immersive-header { padding: 20px; }
+  .immersive-dome { margin: 18px 20px 0; height: 430px; }
+  .immersive-readings { margin-inline: 20px; grid-template-columns: repeat(2, 1fr); }
+  .immersive-readings article:nth-child(2) { border-right: 0; }
+  .immersive-readings article:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.1); }
+  .immersive-note { margin-inline: 20px; }
+}
+
+@media (max-width: 520px) {
+  .sky-modal-backdrop { padding: 0; }
+  .sky-immersive { width: 100%; max-height: 100vh; min-height: 100vh; border: 0; border-radius: 0; }
+  .immersive-header { padding: 17px 16px; }
+  .immersive-header h2 { font-size: 27px; }
+  .immersive-header > div > p:last-child { max-width: 240px; overflow-wrap: anywhere; }
+  .immersive-dome { height: 390px; margin: 12px 12px 0; }
+  .cardinal { font-size: 7px; }
+  .sky-object i { width: 40px; height: 40px; font-size: 26px; }
+  .sky-object strong { font-size: 11px; }
+  .sky-object small { font-size: 7px; }
+  .immersive-readings { margin-inline: 12px; grid-template-columns: 1fr; }
+  .immersive-readings article { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .immersive-readings article:last-child { border-bottom: 0; }
+  .immersive-note { margin: 12px 14px 20px; }
+}

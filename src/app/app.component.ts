@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AstronomyService } from './core/astronomy.service';
@@ -32,11 +32,24 @@ export class AppComponent {
   readonly locationResults = signal<City[]>([]);
   readonly lookupStatus = signal<LookupStatus>('idle');
   readonly prayerMode = signal(false);
+  readonly skyImmersive = signal(false);
   readonly selected = signal<Location>(DEFAULT_LOCATION);
   readonly sun = computed(() => this.astronomy.sun(this.now(), this.selected()));
   readonly moon = computed(() => this.astronomy.moon(this.now(), this.selected()));
   readonly prayers = computed(() => this.astronomy.prayerTimes(this.now(), this.selected()));
   readonly phaseName = computed(() => this.astronomy.phaseName(this.moon().phase));
+  readonly sunAltitudeDeg = computed(() => this.sun().altitude * 180 / Math.PI);
+  readonly moonAltitudeDeg = computed(() => this.moon().altitude * 180 / Math.PI);
+  readonly localSkyTime = computed(() => {
+    try {
+      return new Intl.DateTimeFormat('fr-FR', {
+        timeZone: this.selected().timezone,
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      }).format(this.now());
+    } catch {
+      return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(this.now());
+    }
+  });
   readonly daylight = computed(() => Math.round(this.sun().dayLength / 60000));
   readonly isNight = computed(() => {
     const now = this.now().getTime();
@@ -55,10 +68,56 @@ export class AppComponent {
 
   constructor() {
     effect(onCleanup => { const timer = window.setInterval(() => this.now.set(new Date()), 60_000); onCleanup(() => clearInterval(timer)); });
+    effect(onCleanup => {
+      if (!this.skyImmersive()) return;
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      onCleanup(() => { document.body.style.overflow = previousOverflow; });
+    });
   }
 
   pick(city: City): void { this.selected.set(city); this.query.set(''); this.locationResults.set([]); this.lookupStatus.set('idle'); this.showPlaces.set(false); }
   setView(id: string): void { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  openSkyImmersive(): void { this.skyImmersive.set(true); }
+  closeSkyImmersive(): void { this.skyImmersive.set(false); }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.skyImmersive()) this.closeSkyImmersive();
+  }
+
+  skyX(azimuth: number): number {
+    return Math.max(2.5, Math.min(97.5, (azimuth % 360) / 360 * 100));
+  }
+
+  skyY(altitudeRadians: number): number {
+    const altitude = altitudeRadians * 180 / Math.PI;
+    if (altitude < 0) return 87;
+    return 76 - Math.min(90, altitude) / 90 * 60;
+  }
+
+  horizonLabel(altitudeRadians: number): string {
+    const altitude = altitudeRadians * 180 / Math.PI;
+    if (altitude > 2) return 'au-dessus de l’horizon';
+    if (altitude >= -2) return 'sur l’horizon';
+    return 'sous l’horizon';
+  }
+
+  compassDirection(azimuth: number): string {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+    return directions[Math.round((azimuth % 360) / 45) % 8];
+  }
+
+  formatSkyTime(date: Date | null): string {
+    if (!date) return '—';
+    try {
+      return new Intl.DateTimeFormat('fr-FR', {
+        timeZone: this.selected().timezone, hour: '2-digit', minute: '2-digit'
+      }).format(date);
+    } catch {
+      return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date);
+    }
+  }
   formatDuration(total: number): string { return `${Math.floor(total / 60)} h ${String(total % 60).padStart(2, '0')} min`; }
 
   searchCity(value: string): void {

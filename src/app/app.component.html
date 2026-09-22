@@ -21,8 +21,43 @@
 
   <section class="moon-section section" id="moon"><div class="section-heading"><div><p class="eyebrow">Lune & rythmes</p><h2>Suivre la Lune, nuit après nuit</h2><p>Position et cycle lunaire calculés pour {{ selected().city }}.</p></div></div><app-moon-tracker [location]="selected()" [moment]="now()"></app-moon-tracker></section>
 
-  <section class="sky section" id="sky"><div class="sky-panel"><div class="sky-copy"><p class="eyebrow">Observation</p><h2>Le ciel en direct</h2><p>Une lecture vivante de la voûte céleste au-dessus de vous.</p><button class="ghost">Ouvrir la vue immersive <span>↗</span></button></div><div class="sky-orbit"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="earth">⌁</div><div class="moon-orbit">☾</div><div class="sun-orbit">☀</div><span class="orbit-label label-top">ZÉNITH</span><span class="orbit-label label-left">OUEST</span><span class="orbit-label label-right">EST</span></div></div>
-    <div class="sky-details"><div><span>Position solaire</span><b>{{ sun().altitude * 57.2958 | number:'1.0-0' }}°</b><small>Azimut en temps réel</small></div><div><span>Phase lunaire</span><b>{{ moon().illumination * 100 | number:'1.0-0' }}%</b><small>{{ phaseName() }}</small></div><div><span>Prochaine pleine lune</span><b>Dans 9 jours</b><small>À 04:42</small></div></div></section>
+  <section class="sky section" id="sky"><div class="sky-panel"><div class="sky-copy"><p class="eyebrow">Observation</p><h2>Le ciel en direct</h2><p>Une lecture vivante de la voûte céleste au-dessus de vous, calculée pour {{ selected().city }}.</p><button class="ghost" type="button" (click)="openSkyImmersive()" [attr.aria-expanded]="skyImmersive()">Ouvrir la vue immersive <span>↗</span></button></div><div class="sky-orbit"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="earth">⌁</div><div class="moon-orbit">☾</div><div class="sun-orbit">☀</div><span class="orbit-label label-top">ZÉNITH</span><span class="orbit-label label-left">OUEST</span><span class="orbit-label label-right">EST</span></div></div>
+    <div class="sky-details"><div><span>Soleil</span><b>{{ sunAltitudeDeg() | number:'1.0-0' }}°</b><small>Azimut {{ sun().azimuth | number:'1.0-0' }}° · {{ compassDirection(sun().azimuth) }}</small></div><div><span>Lune</span><b>{{ moonAltitudeDeg() | number:'1.0-0' }}°</b><small>Azimut {{ moon().azimuth | number:'1.0-0' }}° · {{ compassDirection(moon().azimuth) }}</small></div><div><span>Illumination lunaire</span><b>{{ moon().illumination * 100 | number:'1.0-0' }}%</b><small>{{ phaseName() }}</small></div></div></section>
+
+  @if (skyImmersive()) {
+    <div class="sky-modal-backdrop" (click)="closeSkyImmersive()">
+      <section class="sky-immersive" role="dialog" aria-modal="true" aria-labelledby="sky-immersive-title" (click)="$event.stopPropagation()">
+        <header class="immersive-header">
+          <div><p class="eyebrow">Ciel local · temps réel</p><h2 id="sky-immersive-title">{{ selected().city }} · {{ localSkyTime() }}</h2><p>{{ selected().latitude | number:'1.2-2' }}°, {{ selected().longitude | number:'1.2-2' }}° · {{ selected().timezone }}</p></div>
+          <button class="immersive-close" type="button" (click)="closeSkyImmersive()" aria-label="Fermer la vue immersive" autofocus>✕</button>
+        </header>
+
+        <div class="immersive-dome" aria-label="Panorama du ciel avec la position du Soleil et de la Lune">
+          <div class="immersive-stars" aria-hidden="true"></div>
+          <span class="zenith-label">ZÉNITH · 90°</span>
+          <span class="cardinal cardinal-n1">N · 0°</span><span class="cardinal cardinal-e">E · 90°</span><span class="cardinal cardinal-s">S · 180°</span><span class="cardinal cardinal-o">O · 270°</span><span class="cardinal cardinal-n2">N · 360°</span>
+          <div class="altitude-guide guide-60"><span>60°</span></div><div class="altitude-guide guide-30"><span>30°</span></div>
+          <div class="immersive-horizon"><span>HORIZON · 0°</span></div>
+
+          <div class="sky-object sun-live" [class.below-horizon]="sun().altitude < 0" [style.left.%]="skyX(sun().azimuth)" [style.top.%]="skyY(sun().altitude)">
+            <i>☀</i><strong>Soleil</strong><small>{{ sunAltitudeDeg() | number:'1.0-0' }}° · {{ compassDirection(sun().azimuth) }}</small>
+          </div>
+          <div class="sky-object moon-live" [class.below-horizon]="moon().altitude < 0" [style.left.%]="skyX(moon().azimuth)" [style.top.%]="skyY(moon().altitude)">
+            <i>☾</i><strong>Lune</strong><small>{{ moonAltitudeDeg() | number:'1.0-0' }}° · {{ compassDirection(moon().azimuth) }}</small>
+          </div>
+          <div class="below-zone"><span>SOUS L’HORIZON</span></div>
+        </div>
+
+        <div class="immersive-readings">
+          <article><span>Soleil</span><b>{{ sunAltitudeDeg() | number:'1.1-1' }}°</b><small>{{ horizonLabel(sun().altitude) }} · azimut {{ sun().azimuth | number:'1.0-0' }}°</small></article>
+          <article><span>Lune</span><b>{{ moonAltitudeDeg() | number:'1.1-1' }}°</b><small>{{ horizonLabel(moon().altitude) }} · azimut {{ moon().azimuth | number:'1.0-0' }}°</small></article>
+          <article><span>Phase lunaire</span><b>{{ moon().illumination * 100 | number:'1.0-0' }}%</b><small>{{ phaseName() }}</small></article>
+          <article><span>Lever / coucher Lune</span><b>{{ formatSkyTime(moon().rise) }} · {{ formatSkyTime(moon().set) }}</b><small>Heure locale de {{ selected().city }}</small></article>
+        </div>
+        <p class="immersive-note">Position calculée pour le lieu sélectionné. La vue s’actualise automatiquement chaque minute. Échap ferme cette fenêtre.</p>
+      </section>
+    </div>
+  }
 
   <section class="eclipse section" id="eclipses"><div class="section-heading"><div><p class="eyebrow">À noter dans le ciel</p><h2>Prochains rendez-vous</h2></div><button class="outline">Voir le calendrier <span>→</span></button></div><div class="events"><article><span class="date-badge"><b>12</b>AOÛT</span><div><p>Éclipse solaire totale</p><small>Partiellement visible depuis {{ selected().country }}</small></div><span class="event-arrow">↗</span></article><article><span class="date-badge lunar"><b>28</b>AOÛT</span><div><p>Pleine lune des moissons</p><small>Lever de lune à {{ moon().rise | date:'HH:mm' }}</small></div><span class="event-arrow">↗</span></article><article><span class="date-badge"><b>21</b>SEPT.</span><div><p>Éclipse lunaire partielle</p><small>Visible en soirée depuis {{ selected().country }}</small></div><span class="event-arrow">↗</span></article></div></section>
 

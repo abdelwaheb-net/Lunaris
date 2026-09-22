@@ -48,7 +48,7 @@ export class MoonTrackerComponent implements OnChanges {
   protected illumination = 0;
   protected phaseName = '';
   protected currentIcon = '🌙';
-  protected todayMoon: MoonData = { rise: null, set: null, phase: 0, illumination: 0 };
+  protected todayMoon: MoonData = { rise: null, set: null, phase: 0, illumination: 0, altitude: 0, azimuth: 0 };
 
   protected mode: CalendarMode = 'month';
   protected viewYear = new Date().getFullYear();
