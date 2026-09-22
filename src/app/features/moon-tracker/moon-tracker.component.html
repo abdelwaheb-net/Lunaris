@@ -1,5 +1,64 @@
-<section class="moon-shell" aria-label="Position et phases de la Lune">
-  <div class="moon-summary"><p class="eyebrow">Observation lunaire</p><div class="phase-hero"><span>{{ calendar.length ? calendar[moment.getDate() - 1].icon : '🌙' }}</span><div><h2>{{ phaseName }}</h2><p>{{ illumination | number:'1.0-0' }} % illuminée · {{ location.city }}</p></div></div><div class="moon-figures"><div><span>Lever</span><b>{{ astronomy.moon(moment, location).rise | date:'HH:mm' }}</b></div><div><span>Coucher</span><b>{{ astronomy.moon(moment, location).set | date:'HH:mm' }}</b></div></div></div>
-  <div class="moon-sky"><div class="moon-compass"><span class="north">N</span><span class="east">E</span><span class="south">S</span><span class="west">O</span><i class="cross cross-a"></i><i class="cross cross-b"></i><div class="moon-pointer" [ngStyle]="compassPosition()"><span>☾</span></div><div class="compass-core"></div></div><div class="moon-reading"><span>Position dans le ciel</span><b>{{ altitude | number:'1.0-0' }}°</b><small>Azimut {{ bearing | number:'1.0-0' }}° · {{ altitude >= 0 ? 'au-dessus de l’horizon' : 'sous l’horizon' }}</small></div></div>
-  <div class="moon-calendar"><div class="calendar-title"><div><p class="eyebrow">Cycle lunaire</p><h3>{{ monthName }}</h3></div><span>{{ calendar.length }} nuits</span></div><div class="week-labels"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="month-grid">@for (moonDay of calendar; track moonDay.day) { <div class="moon-day" [class.today]="moonDay.today" [title]="moonDay.name"><span class="day-number">{{ moonDay.day }}</span><span class="day-moon">{{ moonDay.icon }}</span><small>{{ moonDay.name }}</small></div> }</div></div>
+<section class="moon-shell" aria-label="Position et cycle de la Lune">
+  <div class="moon-summary">
+    <p class="eyebrow">Observation lunaire</p>
+    <div class="phase-hero"><span>{{ currentIcon }}</span><div><h2>{{ phaseName }}</h2><p>{{ illumination | number:'1.0-0' }} % illuminée · {{ location.city }}</p></div></div>
+    <div class="moon-figures"><div><span>Lever aujourd'hui</span><b>{{ formatTime(todayMoon.rise) }}</b></div><div><span>Coucher aujourd'hui</span><b>{{ formatTime(todayMoon.set) }}</b></div></div>
+  </div>
+
+  <div class="moon-sky">
+    <div class="moon-compass"><span class="north">N</span><span class="east">E</span><span class="south">S</span><span class="west">O</span><i class="cross cross-a"></i><i class="cross cross-b"></i><div class="moon-pointer" [ngStyle]="compassPosition()"><span>☾</span></div><div class="compass-core"></div></div>
+    <div class="moon-reading"><span>Position dans le ciel</span><b>{{ altitude | number:'1.0-0' }}°</b><small>Azimut {{ bearing | number:'1.0-0' }}° · {{ altitude >= 0 ? 'au-dessus de l’horizon' : 'sous l’horizon' }}</small></div>
+  </div>
+
+  <div class="moon-calendar">
+    <div class="calendar-toolbar">
+      <div><p class="eyebrow">Cycle lunaire</p><h3>{{ mode === 'month' ? (monthCalendar.name + ' ' + viewYear) : ('Année ' + viewYear) }}</h3></div>
+      <div class="calendar-actions" aria-label="Navigation du calendrier lunaire">
+        <div class="mode-switch"><button type="button" [class.active]="mode === 'month'" (click)="setMode('month')">Mois</button><button type="button" [class.active]="mode === 'year'" (click)="setMode('year')">Année</button></div>
+        <button type="button" class="nav-button" (click)="previousPeriod()" [attr.aria-label]="mode === 'month' ? 'Mois précédent' : 'Année précédente'">←</button>
+        @if (mode === 'month') {
+          <select aria-label="Mois" [value]="viewMonth" (change)="setMonth(+$any($event.target).value)">@for (month of monthNames; track $index) { <option [value]="$index">{{ month }}</option> }</select>
+        }
+        <input class="year-input" type="number" min="1900" max="2100" aria-label="Année" [value]="viewYear" (change)="setYear(+$any($event.target).value)">
+        <button type="button" class="nav-button" (click)="nextPeriod()" [attr.aria-label]="mode === 'month' ? 'Mois suivant' : 'Année suivante'">→</button>
+        <button type="button" class="today-button" (click)="goToday()">Aujourd'hui</button>
+      </div>
+    </div>
+
+    @if (mode === 'month') {
+      <div class="week-labels" aria-hidden="true"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="month-grid" [style.--offset]="monthCalendar.offset">
+        @for (moonDay of monthCalendar.days; track moonDay.key) {
+          <button type="button" class="moon-day" [class.today]="moonDay.today" [class.selected]="isSelected(moonDay)" [class.major]="moonDay.major" [style.grid-column-start]="$first ? monthCalendar.offset + 1 : null" (click)="select(moonDay)" [attr.aria-label]="moonDay.day + ' ' + monthCalendar.name + ' : ' + moonDay.name">
+            <span class="day-number">{{ moonDay.day }}</span><span class="day-moon">{{ moonDay.icon }}</span><small>{{ moonDay.name }}</small><span class="day-light">{{ moonDay.illumination * 100 | number:'1.0-0' }}%</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="year-grid">
+        @for (month of yearCalendar; track month.month) {
+          <article class="year-month">
+            <button type="button" class="month-name" (click)="openMonth(month.month)">{{ month.name }} <span>↗</span></button>
+            <div class="mini-week" aria-hidden="true"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+            <div class="mini-grid">
+              @for (moonDay of month.days; track moonDay.key) {
+                <button type="button" class="mini-day" [class.today]="moonDay.today" [class.selected]="isSelected(moonDay)" [class.major]="moonDay.major" [style.grid-column-start]="$first ? month.offset + 1 : null" (click)="select(moonDay)" [title]="moonDay.day + ' ' + month.name + ' — ' + moonDay.name">
+                  <span>{{ moonDay.day }}</span><i>{{ moonDay.icon }}</i>
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    @if (selectedDay) {
+      <aside class="phase-detail" aria-live="polite">
+        <div class="detail-phase"><span class="detail-icon">{{ selectedDay.icon }}</span><div><p>Date sélectionnée</p><h4>{{ selectedDay.dateLabel }}</h4><strong>{{ selectedDay.name }}</strong></div></div>
+        <div class="detail-stat"><span>Illumination</span><b>{{ selectedDay.illumination * 100 | number:'1.0-1' }}%</b><small>surface visible éclairée</small></div>
+        <div class="detail-stat"><span>Lever de Lune</span><b>{{ formatTime(selectedDay.rise) }}</b><small>{{ selectedDay.rise ? location.timezone : 'Pas de lever ce jour' }}</small></div>
+        <div class="detail-stat"><span>Coucher de Lune</span><b>{{ formatTime(selectedDay.set) }}</b><small>{{ selectedDay.set ? location.timezone : 'Pas de coucher ce jour' }}</small></div>
+      </aside>
+    }
+  </div>
 </section>
