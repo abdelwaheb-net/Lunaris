@@ -1,66 +1,236 @@
 <main [class.theme-night]="isNight()" [class.theme-day]="!isNight()">
   <nav class="topbar">
     <a class="brand" href="#top" aria-label="Lunaris accueil"><span class="brand-mark">◐</span> lunaris</a>
-    <div class="nav-links"><button (click)="setView('today')">Aujourd'hui</button><button (click)="setView('solar-map')">Carte solaire</button><button (click)="setView('moon')">Cycle lunaire</button><button (click)="setView('sky')">Ciel en direct</button><button (click)="setView('eclipses')">Éclipses</button></div>
-    <button class="location" (click)="showPlaces.set(!showPlaces())"><span class="pin">⌖</span>{{ selected().city }}<span class="theme-indicator" [attr.title]="themeLabel()">{{ isNight() ? '☾' : '☀' }}</span><span>⌄</span></button>
-    @if (showPlaces()) { <div class="place-menu"><input [ngModel]="query()" (ngModelChange)="searchCity($event)" placeholder="Ville, partout dans le monde…" autocomplete="off" autofocus><p class="search-note">Recherchez une ville ou une commune.</p>@if (lookupStatus() === 'loading') { <p class="search-state">Recherche de villes…</p> } @else if (lookupStatus() === 'error') { <p class="search-state error">La recherche est indisponible. Réessayez.</p> } @else if (query().trim().length >= 2 && locationResults().length === 0) { <p class="search-state">Aucune ville trouvée.</p> } @else { @for (city of locationResults(); track city.label + city.latitude) { <button (click)="pick(city)"><span>⌖</span><span><strong>{{ city.city }}</strong><small>{{ city.label }}</small></span></button> } }</div> }
+    <div class="nav-links"><button (click)="setView('today')">Aujourd'hui</button><button
+        (click)="setView('solar-map')">Carte solaire</button><button (click)="setView('moon')">Cycle
+        lunaire</button><button (click)="setView('sky')">Ciel en direct</button><button
+        (click)="setView('eclipses')">Éclipses</button></div>
+    <button class="location" (click)="showPlaces.set(!showPlaces())"><span class="pin">⌖</span>{{ selected().city
+      }}<span class="theme-indicator" [attr.title]="themeLabel()">{{ isNight() ? '☾' : '☀'
+        }}</span><span>⌄</span></button>
+    @if (showPlaces()) { <div class="place-menu"><input [ngModel]="query()" (ngModelChange)="searchCity($event)"
+        placeholder="Ville, partout dans le monde…" autocomplete="off" autofocus>
+      <p class="search-note">Recherchez une ville ou une commune.</p>@if (lookupStatus() === 'loading') { <p
+        class="search-state">Recherche de villes…</p> } @else if (lookupStatus() === 'error') { <p
+        class="search-state error">La recherche est indisponible. Réessayez.</p> } @else if (query().trim().length >= 2
+      && locationResults().length === 0) { <p class="search-state">Aucune ville trouvée.</p> } @else { @for (city of
+      locationResults(); track city.label + city.latitude) { <button (click)="pick(city)"><span>⌖</span><span><strong>{{
+            city.city }}</strong><small>{{ city.label }}</small></span></button> } }
+    </div> }
   </nav>
 
   <section class="hero" id="top">
-    <div class="stars"></div><div class="orb orb-one"></div><div class="orb orb-two"></div>
-    <div class="hero-copy"><p class="eyebrow">Votre ciel · {{ selected().country }}</p><h1>Le ciel, <em>ici</em><br>et maintenant.</h1><p class="intro">Les rythmes du soleil, de la lune et des étoiles — calculés précisément pour {{ selected().city }}.</p><button class="primary" (click)="setView('today')">Explorer aujourd'hui <span>→</span></button></div>
-    <div class="hero-sky" aria-label="Visualisation du ciel"><div class="constellation c-one">✦　 ·　 ✦<br>　　·　✧</div><div class="constellation c-two">✧　·<br>　　✦　　·</div><div class="sun-glow"><div class="sun"></div></div><div class="horizon"><span>O</span><i></i><span>E</span></div><div class="sun-label"><span>☀</span><b>Soleil</b><small>{{ sun().altitude * 57.2958 | number:'1.0-0' }}° au-dessus de l'horizon</small></div></div>
+    <div class="stars"></div>
+    <div class="orb orb-one"></div>
+    <div class="orb orb-two"></div>
+    <div class="hero-copy">
+      <p class="eyebrow">Votre ciel · {{ selected().country }}</p>
+      <h1>Le ciel, <em>ici</em><br>et maintenant.</h1>
+      <p class="intro">Les rythmes du soleil, de la lune et des étoiles — calculés précisément pour {{ selected().city
+        }}.</p><button class="primary" (click)="setView('today')">Explorer aujourd'hui <span>→</span></button>
+    </div>
+    <div class="hero-sky" aria-label="Visualisation du ciel">
+      <div class="constellation c-one">✦　 ·　 ✦<br>　　·　✧</div>
+      <div class="constellation c-two">✧　·<br>　　✦　　·</div>
+      <div class="sun-glow">
+        <div class="sun"></div>
+      </div>
+      <div class="horizon"><span>O</span><i></i><span>E</span></div>
+      <div class="sun-label"><span>☀</span><b>Soleil</b><small>{{ sun().altitude * 57.2958 | number:'1.0-0' }}°
+          au-dessus de l'horizon</small></div>
+    </div>
   </section>
 
-  <section class="today section" id="today"><div class="section-heading"><div><p class="eyebrow">Éphémérides</p><h2>Aujourd'hui à {{ selected().city }}</h2><p>{{ dateLabel() }}</p></div><div class="day-pill"><span>☀</span>{{ formatDuration(daylight()) }} de lumière</div></div>
-    <div class="stats-grid"><article class="stat-card sunrise"><div class="icon">↗</div><p>Lever du soleil</p><h3>{{ sun().sunrise | date:'HH:mm' }}</h3><small>Aube civile · {{ sun().sunrise | date:'HH:mm' }}</small></article><article class="stat-card sunset"><div class="icon">↘</div><p>Coucher du soleil</p><h3>{{ sun().sunset | date:'HH:mm' }}</h3><small>Crépuscule civil · {{ sun().sunset | date:'HH:mm' }}</small></article><article class="stat-card moon-card"><div class="moon-small"></div><p>Lune</p><h3>{{ phaseName() }}</h3><small>{{ moon().illumination * 100 | number:'1.0-0' }} % illuminée</small></article><article class="stat-card time-card"><div class="icon">◷</div><p>Midi solaire</p><h3>{{ sun().solarNoon | date:'HH:mm' }}</h3><small>Le soleil au plus haut</small></article></div>
-    <article class="day-track"><div class="track-top"><span>Course du soleil</span><span>lever <b>{{ sun().sunrise | date:'HH:mm' }}</b> — coucher <b>{{ sun().sunset | date:'HH:mm' }}</b></span></div><div class="arc-wrap"><div class="arc"></div><div class="marker" [style.left.%]="sunProgress()"><i>☀</i><small>maintenant</small></div><div class="ground"></div></div><div class="timeline"><span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>00h</span></div></article>
+  <section class="today section" id="today">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Éphémérides</p>
+        <h2>Aujourd'hui à {{ selected().city }}</h2>
+        <p>{{ dateLabel() }}</p>
+      </div>
+      <div class="day-pill"><span>☀</span>{{ formatDuration(daylight()) }} de lumière</div>
+    </div>
+    <div class="stats-grid">
+      <article class="stat-card sunrise">
+        <div class="icon">↗</div>
+        <p>Lever du soleil</p>
+        <h3>{{ sun().sunrise | date:'HH:mm' }}</h3><small>Aube civile · {{ sun().sunrise | date:'HH:mm' }}</small>
+      </article>
+      <article class="stat-card sunset">
+        <div class="icon">↘</div>
+        <p>Coucher du soleil</p>
+        <h3>{{ sun().sunset | date:'HH:mm' }}</h3><small>Crépuscule civil · {{ sun().sunset | date:'HH:mm' }}</small>
+      </article>
+      <article class="stat-card moon-card">
+        <div class="moon-small"></div>
+        <p>Lune</p>
+        <h3>{{ phaseName() }}</h3><small>{{ moon().illumination * 100 | number:'1.0-0' }} % illuminée</small>
+      </article>
+      <article class="stat-card time-card">
+        <div class="icon">◷</div>
+        <p>Midi solaire</p>
+        <h3>{{ sun().solarNoon | date:'HH:mm' }}</h3><small>Le soleil au plus haut</small>
+      </article>
+    </div>
+    <article class="day-track">
+      <div class="track-top"><span>Course du soleil</span><span>lever <b>{{ sun().sunrise | date:'HH:mm' }}</b> —
+          coucher <b>{{ sun().sunset | date:'HH:mm' }}</b></span></div>
+      <div class="arc-wrap">
+        <div class="arc"></div>
+        <div class="marker" [style.left.%]="sunProgress()"><i>☀</i><small>maintenant</small></div>
+        <div class="ground"></div>
+      </div>
+      <div class="timeline"><span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>00h</span></div>
+    </article>
   </section>
 
-  <section class="map-section section" id="solar-map"><div class="section-heading"><div><p class="eyebrow">Soleil & territoire</p><h2>Où regarder, maintenant ?</h2><p>La position s’actualise automatiquement selon {{ selected().city }}.</p></div><div class="day-pill"><span>⌖</span>{{ selected().latitude | number:'1.2-2' }}°, {{ selected().longitude | number:'1.2-2' }}°</div></div><app-solar-map [location]="selected()" [moment]="now()"></app-solar-map></section>
+  <section class="map-section section" id="solar-map">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Soleil & territoire</p>
+        <h2>Où regarder, maintenant ?</h2>
+        <p>La position s’actualise automatiquement selon {{ selected().city }}.</p>
+      </div>
+      <div class="day-pill"><span>⌖</span>{{ selected().latitude | number:'1.2-2' }}°, {{ selected().longitude |
+        number:'1.2-2' }}°</div>
+    </div><app-solar-map [location]="selected()" [moment]="now()"></app-solar-map>
+  </section>
 
-  <section class="moon-section section" id="moon"><div class="section-heading"><div><p class="eyebrow">Lune & rythmes</p><h2>Suivre la Lune, nuit après nuit</h2><p>Position et cycle lunaire calculés pour {{ selected().city }}.</p></div></div><app-moon-tracker [location]="selected()" [moment]="now()"></app-moon-tracker></section>
+  <section class="moon-section section" id="moon">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Lune & rythmes</p>
+        <h2>Suivre la Lune, nuit après nuit</h2>
+        <p>Position et cycle lunaire calculés pour {{ selected().city }}.</p>
+      </div>
+    </div><app-moon-tracker [location]="selected()" [moment]="now()"></app-moon-tracker>
+  </section>
 
-  <section class="sky section" id="sky"><div class="sky-panel"><div class="sky-copy"><p class="eyebrow">Observation</p><h2>Le ciel en direct</h2><p>Une lecture vivante de la voûte céleste au-dessus de vous, calculée pour {{ selected().city }}.</p><button class="ghost" type="button" (click)="openSkyImmersive()" [attr.aria-expanded]="skyImmersive()">Ouvrir la vue immersive <span>↗</span></button></div><div class="sky-orbit"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="earth">⌁</div><div class="moon-orbit">☾</div><div class="sun-orbit">☀</div><span class="orbit-label label-top">ZÉNITH</span><span class="orbit-label label-left">OUEST</span><span class="orbit-label label-right">EST</span></div></div>
-    <div class="sky-details"><div><span>Soleil</span><b>{{ sunAltitudeDeg() | number:'1.0-0' }}°</b><small>Azimut {{ sun().azimuth | number:'1.0-0' }}° · {{ compassDirection(sun().azimuth) }}</small></div><div><span>Lune</span><b>{{ moonAltitudeDeg() | number:'1.0-0' }}°</b><small>Azimut {{ moon().azimuth | number:'1.0-0' }}° · {{ compassDirection(moon().azimuth) }}</small></div><div><span>Illumination lunaire</span><b>{{ moon().illumination * 100 | number:'1.0-0' }}%</b><small>{{ phaseName() }}</small></div></div></section>
+  <section class="sky section" id="sky">
+    <div class="sky-panel">
+      <div class="sky-copy">
+        <p class="eyebrow">Observation</p>
+        <h2>Le ciel en direct</h2>
+        <p>Une lecture vivante de la voûte céleste au-dessus de vous, calculée pour {{ selected().city }}.</p><button
+          class="ghost" type="button" (click)="openSkyImmersive()" [attr.aria-expanded]="skyImmersive()">Ouvrir la vue
+          immersive <span>↗</span></button>
+      </div>
+      <div class="sky-orbit">
+        <div class="orbit orbit-a"></div>
+        <div class="orbit orbit-b"></div>
+        <div class="earth">⌁</div>
+        <div class="moon-orbit">☾</div>
+        <div class="sun-orbit">☀</div><span class="orbit-label label-top">ZÉNITH</span><span
+          class="orbit-label label-left">OUEST</span><span class="orbit-label label-right">EST</span>
+      </div>
+    </div>
+    <div class="sky-details">
+      <div><span>Soleil</span><b>{{ sunAltitudeDeg() | number:'1.0-0' }}°</b><small>Azimut {{ sun().azimuth |
+          number:'1.0-0' }}° · {{ compassDirection(sun().azimuth) }}</small></div>
+      <div><span>Lune</span><b>{{ moonAltitudeDeg() | number:'1.0-0' }}°</b><small>Azimut {{ moon().azimuth |
+          number:'1.0-0' }}° · {{ compassDirection(moon().azimuth) }}</small></div>
+      <div><span>Illumination lunaire</span><b>{{ moon().illumination * 100 | number:'1.0-0' }}%</b><small>{{
+          phaseName() }}</small></div>
+    </div>
+  </section>
 
   @if (skyImmersive()) {
-    <div class="sky-modal-backdrop" (click)="closeSkyImmersive()">
-      <section class="sky-immersive" role="dialog" aria-modal="true" aria-labelledby="sky-immersive-title" (click)="$event.stopPropagation()">
-        <header class="immersive-header">
-          <div><p class="eyebrow">Ciel local · temps réel</p><h2 id="sky-immersive-title">{{ selected().city }} · {{ localSkyTime() }}</h2><p>{{ selected().latitude | number:'1.2-2' }}°, {{ selected().longitude | number:'1.2-2' }}° · {{ selected().timezone }}</p></div>
-          <button class="immersive-close" type="button" (click)="closeSkyImmersive()" aria-label="Fermer la vue immersive" autofocus>✕</button>
-        </header>
-
-        <div class="immersive-dome" aria-label="Panorama du ciel avec la position du Soleil et de la Lune">
-          <div class="immersive-stars" aria-hidden="true"></div>
-          <span class="zenith-label">ZÉNITH · 90°</span>
-          <span class="cardinal cardinal-n1">N · 0°</span><span class="cardinal cardinal-e">E · 90°</span><span class="cardinal cardinal-s">S · 180°</span><span class="cardinal cardinal-o">O · 270°</span><span class="cardinal cardinal-n2">N · 360°</span>
-          <div class="altitude-guide guide-60"><span>60°</span></div><div class="altitude-guide guide-30"><span>30°</span></div>
-          <div class="immersive-horizon"><span>HORIZON · 0°</span></div>
-
-          <div class="sky-object sun-live" [class.below-horizon]="sun().altitude < 0" [style.left.%]="skyX(sun().azimuth)" [style.top.%]="skyY(sun().altitude)">
-            <i>☀</i><strong>Soleil</strong><small>{{ sunAltitudeDeg() | number:'1.0-0' }}° · {{ compassDirection(sun().azimuth) }}</small>
-          </div>
-          <div class="sky-object moon-live" [class.below-horizon]="moon().altitude < 0" [style.left.%]="skyX(moon().azimuth)" [style.top.%]="skyY(moon().altitude)">
-            <i>☾</i><strong>Lune</strong><small>{{ moonAltitudeDeg() | number:'1.0-0' }}° · {{ compassDirection(moon().azimuth) }}</small>
-          </div>
-          <div class="below-zone"><span>SOUS L’HORIZON</span></div>
+  <div class="sky-modal-backdrop" (click)="closeSkyImmersive()">
+    <section class="sky-immersive" role="dialog" aria-modal="true" aria-labelledby="sky-immersive-title"
+      (click)="$event.stopPropagation()">
+      <header class="immersive-header">
+        <div>
+          <p class="eyebrow">Ciel local · temps réel</p>
+          <h2 id="sky-immersive-title">{{ selected().city }} · {{ localSkyTime() }}</h2>
+          <p>{{ selected().latitude | number:'1.2-2' }}°, {{ selected().longitude | number:'1.2-2' }}° · {{
+            selected().timezone }}</p>
         </div>
+        <button class="immersive-close" type="button" (click)="closeSkyImmersive()" aria-label="Fermer la vue immersive"
+          autofocus>✕</button>
+      </header>
 
-        <div class="immersive-readings">
-          <article><span>Soleil</span><b>{{ sunAltitudeDeg() | number:'1.1-1' }}°</b><small>{{ horizonLabel(sun().altitude) }} · azimut {{ sun().azimuth | number:'1.0-0' }}°</small></article>
-          <article><span>Lune</span><b>{{ moonAltitudeDeg() | number:'1.1-1' }}°</b><small>{{ horizonLabel(moon().altitude) }} · azimut {{ moon().azimuth | number:'1.0-0' }}°</small></article>
-          <article><span>Phase lunaire</span><b>{{ moon().illumination * 100 | number:'1.0-0' }}%</b><small>{{ phaseName() }}</small></article>
-          <article><span>Lever / coucher Lune</span><b>{{ formatSkyTime(moon().rise) }} · {{ formatSkyTime(moon().set) }}</b><small>Heure locale de {{ selected().city }}</small></article>
+      <div class="immersive-dome" aria-label="Panorama du ciel avec la position du Soleil et de la Lune">
+        <div class="immersive-stars" aria-hidden="true"></div>
+        <span class="zenith-label">ZÉNITH · 90°</span>
+        <span class="cardinal cardinal-n1">N · 0°</span><span class="cardinal cardinal-e">E · 90°</span><span
+          class="cardinal cardinal-s">S · 180°</span><span class="cardinal cardinal-o">O · 270°</span><span
+          class="cardinal cardinal-n2">N · 360°</span>
+        <div class="altitude-guide guide-60"><span>60°</span></div>
+        <div class="altitude-guide guide-30"><span>30°</span></div>
+        <div class="immersive-horizon"><span>HORIZON · 0°</span></div>
+
+        <div class="sky-object sun-live" [class.below-horizon]="sun().altitude < 0" [style.left.%]="skyX(sun().azimuth)"
+          [style.top.%]="skyY(sun().altitude)">
+          <i>☀</i><strong>Soleil</strong><small>{{ sunAltitudeDeg() | number:'1.0-0' }}° · {{
+            compassDirection(sun().azimuth) }}</small>
         </div>
-        <p class="immersive-note">Position calculée pour le lieu sélectionné. La vue s’actualise automatiquement chaque minute. Échap ferme cette fenêtre.</p>
-      </section>
-    </div>
+        <div class="sky-object moon-live" [class.below-horizon]="moon().altitude < 0"
+          [style.left.%]="skyX(moon().azimuth)" [style.top.%]="skyY(moon().altitude)">
+          <i>☾</i><strong>Lune</strong><small>{{ moonAltitudeDeg() | number:'1.0-0' }}° · {{
+            compassDirection(moon().azimuth) }}</small>
+        </div>
+        <div class="below-zone"><span>SOUS L’HORIZON</span></div>
+      </div>
+
+      <div class="immersive-readings">
+        <article><span>Soleil</span><b>{{ sunAltitudeDeg() | number:'1.1-1' }}°</b><small>{{
+            horizonLabel(sun().altitude) }} · azimut {{ sun().azimuth | number:'1.0-0' }}°</small></article>
+        <article><span>Lune</span><b>{{ moonAltitudeDeg() | number:'1.1-1' }}°</b><small>{{
+            horizonLabel(moon().altitude) }} · azimut {{ moon().azimuth | number:'1.0-0' }}°</small></article>
+        <article><span>Phase lunaire</span><b>{{ moon().illumination * 100 | number:'1.0-0' }}%</b><small>{{ phaseName()
+            }}</small></article>
+        <article><span>Lever / coucher Lune</span><b>{{ formatSkyTime(moon().rise) }} · {{ formatSkyTime(moon().set)
+            }}</b><small>Heure locale de {{ selected().city }}</small></article>
+      </div>
+      <p class="immersive-note">Position calculée pour le lieu sélectionné. La vue s’actualise automatiquement chaque
+        minute. Échap ferme cette fenêtre.</p>
+    </section>
+  </div>
   }
 
-  <section class="eclipse section" id="eclipses"><div class="section-heading"><div><p class="eyebrow">À noter dans le ciel</p><h2>Prochains rendez-vous</h2></div><button class="outline">Voir le calendrier <span>→</span></button></div><div class="events"><article><span class="date-badge"><b>12</b>AOÛT</span><div><p>Éclipse solaire totale</p><small>Partiellement visible depuis {{ selected().country }}</small></div><span class="event-arrow">↗</span></article><article><span class="date-badge lunar"><b>28</b>AOÛT</span><div><p>Pleine lune des moissons</p><small>Lever de lune à {{ moon().rise | date:'HH:mm' }}</small></div><span class="event-arrow">↗</span></article><article><span class="date-badge"><b>21</b>SEPT.</span><div><p>Éclipse lunaire partielle</p><small>Visible en soirée depuis {{ selected().country }}</small></div><span class="event-arrow">↗</span></article></div></section>
+  <section class="eclipse section" id="eclipses">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">À noter dans le ciel</p>
+        <h2>Prochains rendez-vous</h2>
+      </div><button class="outline">Voir le calendrier <span>→</span></button>
+    </div>
+    <div class="events">
+      <article><span class="date-badge"><b>12</b>AOÛT</span>
+        <div>
+          <p>Éclipse solaire totale</p><small>Partiellement visible depuis {{ selected().country }}</small>
+        </div><span class="event-arrow">↗</span>
+      </article>
+      <article><span class="date-badge lunar"><b>28</b>AOÛT</span>
+        <div>
+          <p>Pleine lune des moissons</p><small>Lever de lune à {{ moon().rise | date:'HH:mm' }}</small>
+        </div><span class="event-arrow">↗</span>
+      </article>
+      <article><span class="date-badge"><b>21</b>SEPT.</span>
+        <div>
+          <p>Éclipse lunaire partielle</p><small>Visible en soirée depuis {{ selected().country }}</small>
+        </div><span class="event-arrow">↗</span>
+      </article>
+    </div>
+  </section>
 
-  <section class="prayer" [ngClass]="{ active: prayerMode() }"><div><p class="eyebrow">Calendrier lunaire</p><h2>Mode Ramadan & prières</h2><p>Des horaires fondés sur la position réelle du soleil, pour {{ selected().city }}.</p></div><button class="toggle" [attr.aria-pressed]="prayerMode()" (click)="prayerMode.set(!prayerMode())"><i></i>{{ prayerMode() ? 'Activé' : 'Activer' }}</button>@if (prayerMode()) { <div class="prayer-times"><span>Fajr <b>{{ prayers().fajr | date:'HH:mm' }}</b></span><span>Dhuhr <b>{{ prayers().dhuhr | date:'HH:mm' }}</b></span><span>Maghrib <b>{{ prayers().maghrib | date:'HH:mm' }}</b></span><span>Isha <b>{{ prayers().isha | date:'HH:mm' }}</b></span></div> }</section>
-  <footer><span class="brand"><span class="brand-mark">◐</span> lunaris</span><span>Une fenêtre sur le cosmos.</span><span>Calculs locaux · Vos données restent privées</span></footer>
+  <section class="prayer" [ngClass]="{ active: prayerMode() }">
+    <div>
+      <p class="eyebrow">Calendrier lunaire</p>
+      <h2>Mode Ramadan & prières</h2>
+      <p>Des horaires fondés sur la position réelle du soleil, pour {{ selected().city }}.</p>
+    </div><button class="toggle" [attr.aria-pressed]="prayerMode()" (click)="prayerMode.set(!prayerMode())"><i></i>{{
+      prayerMode() ? 'Activé' : 'Activer' }}</button>@if (prayerMode()) { <div class="prayer-times"><span>Fajr <b>{{
+          prayers().fajr | date:'HH:mm' }}</b></span><span>Dhuhr <b>{{ prayers().dhuhr | date:'HH:mm'
+          }}</b></span><span>Maghrib <b>{{ prayers().maghrib | date:'HH:mm' }}</b></span><span>Isha <b>{{ prayers().isha
+          | date:'HH:mm' }}</b></span></div> }
+  </section>
+  <footer class="footer">
+    <p>
+      Abdelwaheb AMMAR © Copyright 2026 ·
+      <a href="https://github.com/abdelwaheb-net" target="_blank" rel="noopener noreferrer">
+        GitHub
+      </a>
+    </p>
+  </footer>
 </main>
